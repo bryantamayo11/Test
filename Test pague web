@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rifa de Números</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Pacifico&display=swap');
+        body {
+            font-family: 'Roboto', sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f8ff;
+            background-image: url('https://www.publicdomainpictures.net/pictures/320000/velka/background-image.png');
+            background-size: cover;
+            background-attachment: fixed;
+            background-blend-mode: overlay;
+        }
+        .container {
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.95);
+            margin: 20px auto;
+            border-radius: 10px;
+            max-width: 800px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        }
+        h1 {
+            color: #333;
+            font-family: 'Pacifico', cursive;
+        }
+        h2 {
+            color: #333;
+        }
+        .number-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: scroll;
+        }
+        .number {
+            padding: 10px;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            border-radius: 5px;
+        }
+        .number:hover {
+            background-color: #f0f0f0;
+        }
+        .selected {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .disabled {
+            background-color: #ccc;
+            color: #666;
+            cursor: not-allowed;
+        }
+        .button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+        .info {
+            margin-top: 20px;
+        }
+        .info label {
+            display: block;
+            margin: 10px 0 5px;
+            color: #333;
+        }
+        .info input, .info select {
+            padding: 10px;
+            width: calc(100% - 22px);
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .info input::placeholder {
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Rifa de Números</h1>
+        <h2 id="raffleTitle">Rifa de 5000 pesos - Edición <span id="raffleEdition">1</span></h2>
+        <div class="number-grid" id="numberGrid"></div>
+        <p id="selectedNumbers">Números seleccionados: Ninguno</p>
+        <p id="counter">Boletos seleccionados: 0</p>
+        <p id="availableTickets">Boletos disponibles: 1000</p>
+        <div class="info">
+            <label for="name">Nombre Completo:</label>
+            <input type="text" id="name" placeholder="Tu Nombre Completo"><br><br>
+            <label for="phone">Número de Celular:</label>
+            <input type="text" id="phone" placeholder="521XXXXXXXXXX"><br><br>
+            <label for="state">Estado:</label>
+            <input type="text" id="state" placeholder="Tu Estado"><br><br>
+            <label for="date">Fecha:</label>
+            <input type="date" id="date" value="2024-07-23" readonly><br><br>
+            <label for="ticketCount">Cantidad de Boletos:</label>
+            <input type="number" id="ticketCount" min="1" max="100" placeholder="1-100"><br><br>
+        </div>
+        <button class="button" onclick="selectRandomTickets()">Suerte</button>
+        <button class="button" onclick="sendToWhatsApp()">Enviar a WhatsApp</button>
+    </div>
+    <script>
+        const numberGrid = document.getElementById('numberGrid');
+        const selectedNumbers = document.getElementById('selectedNumbers');
+        const counter = document.getElementById('counter');
+        const availableTickets = document.getElementById('availableTickets');
+        const raffleTitle = document.getElementById('raffleTitle');
+        const raffleEdition = document.getElementById('raffleEdition');
+        let selected = [];
+
+        // Función para actualizar el título y la edición de la rifa
+        function updateRaffle(title, edition) {
+            raffleTitle.textContent = title;
+            raffleEdition.textContent = edition;
+        }
+
+        // Ejemplo de actualización de la rifa
+        updateRaffle('Rifa de 5000 pesos', 1);
+
+        for (let i = 0; i < 1000; i++) {
+            const numberDiv = document.createElement('div');
+            numberDiv.classList.add('number');
+            numberDiv.textContent = i.toString().padStart(3, '0');
+            numberDiv.addEventListener('click', () => {
+                if (numberDiv.classList.contains('disabled')) return;
+                if (selected.includes(i)) {
+                    selected = selected.filter(num => num !== i);
+                    numberDiv.classList.remove('selected');
+                } else {
+                    selected.push(i);
+                    numberDiv.classList.add('selected');
+                }
+                selectedNumbers.textContent = `Números seleccionados: ${selected.join(', ') || 'Ninguno'}`;
+                counter.textContent = `Boletos seleccionados: ${selected.length}`;
+                availableTickets.textContent = `Boletos disponibles: ${1000 - selected.length}`;
+            });
+            numberGrid.appendChild(numberDiv);
+        }
+
+        function selectRandomTickets() {
+            const ticketCount = parseInt(document.getElementById('ticketCount').value);
+            if (isNaN(ticketCount) || ticketCount < 1 || ticketCount > 100) {
+                alert('Por favor, ingresa una cantidad válida de boletos entre 1 y 100.');
+                return;
+            }
+            selected = [];
+            const availableNumbers = Array.from({ length: 1000 }, (_, i) => i).filter(num => !document.querySelector(`.number:nth-child(${num + 1})`).classList.contains('disabled'));
+            for (let i = 0; i < ticketCount; i++) {
+                const randomIndex = Math.floor(Math.random() * availableNumbers.length);
+                const randomNumber = availableNumbers.splice(randomIndex, 1)[0];
+                selected.push(randomNumber);
+                document.querySelector(`.number:nth-child(${randomNumber + 1})`).classList.add('selected');
+            }
+            selectedNumbers.textContent = `Números seleccionados: ${selected.join(', ') || 'Ninguno'}`;
+            counter.textContent = `Boletos seleccionados: ${selected.length}`;
+            availableTickets.textContent = `Boletos disponibles: ${1000 - selected.length}`;
+        }
+
+        function sendToWhatsApp() {
+            const name = document.getElementById('name').value;
+            const phone = document.getElementById('phone').value;
+            const state = document.getElementById('state').value;
+            const date = document.getElementById('date').value;
+            const message = `Nombre: ${name}%0ANúmero de Celular: ${phone}%0AEstado: ${state}%0AFecha: ${date}%0ANúmeros seleccionados: ${selected.join(', ') || 'Ninguno'}`;
+            window.open(`https://wa.me/?text=${message}`, '_blank');
+        }
+    </script>
+</body>
+</html>
